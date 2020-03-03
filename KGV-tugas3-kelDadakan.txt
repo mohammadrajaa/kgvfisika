@@ -1,0 +1,143 @@
+//
+//  fisika.cpp
+//  KGVKGVKGV
+//
+//  Created by Mohammad Raja Alfachrezi Dalimunthe on 27/02/20.
+//  Copyright © 2020 Mohammad Raja Alfachrezi Dalimunthe. All rights reserved.
+//
+#ifdef __APPLE__
+/* Defined before OpenGL and GLUT includes to avoid deprecation messages */
+#define GL_SILENCE_DEPRECATION
+#include <OpenGL/gl.h>
+#include <GLUT/glut.h>
+#else
+#include <OPENGL/gl.h>
+#include <GLUT/GLUT.h>
+#endif
+#include <iostream>
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+using namespace std;
+
+
+float translateY = 4.0f;
+float translateX = -4.0f;
+
+float currTime = 0.0f;
+float prevTime = 0.0f;
+
+float width =1.0f;
+float height = 1.0f;
+
+float halfWidth = width / 2.0f;
+float halfHeigth = height / 2.0f;
+
+float accelerationY = -0.5f;
+
+float prevVelocityY = 0.0f;
+float currVelocityY = 0.0f;
+float currVelocityX = 5.0f;
+
+
+void changeSize(int w, int h) {
+
+    // Prevent a divide by zero, when window is too short
+    // (you cant make a window of zero width).
+    if (h == 0)
+        h = 1;
+
+    // Use the Projection Matrix
+    glMatrixMode(GL_PROJECTION);
+
+    // Reset Matrix
+    glLoadIdentity();
+
+    // Set the viewport to be the entire window
+    glViewport(0, 0, w, h);
+
+    // Set the correct perspective.
+    //gluPerspective(45, ratio, 1, 100);
+    gluOrtho2D(-5, 5, -5, 5);
+
+    // Get Back to the Modelview
+    glMatrixMode(GL_MODELVIEW);
+}
+
+void renderScene(void) {
+
+    currTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
+
+    float deltaTime = currTime - prevTime;
+    
+    //untuk meenambah kecepatan Y
+    currVelocityY = prevVelocityY + deltaTime / accelerationY;
+
+    //untuk membuat kotak bergerak kearah Y
+    translateY = translateY + deltaTime * currVelocityY;
+    //untuk membuat kotak bergerak ke arah X
+    translateX = translateX + deltaTime * currVelocityX;
+    
+    //untuk membuat waktu skrg jadi waktu sebelumnya
+    prevTime = currTime;
+    //untuk membuat gravitasi
+    prevVelocityY = currVelocityY;
+
+    //untuk membuat tanah
+    if (translateY < -5.0f + halfHeigth && prevVelocityY < 0.0f)
+    {
+        prevVelocityY = -0.5f * prevVelocityY;
+        //untuk membuat kotak berhenti saat sudah di tanah
+        if (prevVelocityY < 0.1f) {
+            currVelocityX = 0.0f;
+            //untuk membuat kotak berhenti kebawah saat sudah stop
+            translateY = -4.5f;
+            
+            
+        }
+
+    }
+    //untuk membuat batas layar kanan dan kiri 
+    if (translateX > 4.5f || translateX < -4.5f)
+    {
+        currVelocityX  = currVelocityX * -1.0f;
+    }
+
+    glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glLoadIdentity();
+
+    glTranslatef(translateX, translateY, 0.0f);
+    glBegin(GL_QUADS);
+    glColor3f(1.0f, 1.0f, 1.0f);
+    glVertex2f(-halfWidth, -halfHeigth);
+    glVertex2f(-halfWidth, halfHeigth);
+    glVertex2f(halfWidth, halfHeigth);
+    glVertex2f(halfWidth, -halfHeigth);
+    glEnd();
+
+
+
+    glutSwapBuffers();
+
+}
+
+int main(int argc, char** argv) {
+
+    // init GLUT and create window
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
+    glutInitWindowPosition(200, 100);
+    glutInitWindowSize(740 , 640);
+    glutCreateWindow("Tugas 3");
+
+    // register callbacks
+    glutDisplayFunc(renderScene);
+    glutIdleFunc(renderScene);
+    glutReshapeFunc(changeSize);
+    glutFullScreen();
+    // enter GLUT event processing loop
+    glutMainLoop();
+
+    return 1;
+}
